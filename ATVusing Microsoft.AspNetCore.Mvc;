@@ -1,0 +1,99 @@
+using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace SeuProjeto.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class PessoaController : ControllerBase
+    {
+        // Lista para armazenar os dados em memória
+        private static List<Pessoa> pessoas = new List<Pessoa>();
+
+        // Classe Pessoa
+        public class Pessoa
+        {
+            public string Nome { get; set; }
+            public string Cpf { get; set; }
+            public double Peso { get; set; }
+            public double Altura { get; set; }
+
+            // Calcula o IMC
+            public double IMC => Peso / (Altura * Altura);
+        }
+
+        // a. Adicionar uma pessoa
+        [HttpPost("adicionar")]
+        public IActionResult Adicionar([FromBody] Pessoa pessoa)
+        {
+            if (pessoas.Any(p => p.Cpf == pessoa.Cpf))
+                return BadRequest("Pessoa com esse CPF já existe.");
+
+            pessoas.Add(pessoa);
+            return Ok(pessoa);
+        }
+
+        // b. Atualizar os dados de uma pessoa
+        [HttpPut("atualizar/{cpf}")]
+        public IActionResult Atualizar(string cpf, [FromBody] Pessoa pessoaAtualizada)
+        {
+            var pessoa = pessoas.FirstOrDefault(p => p.Cpf == cpf);
+            if (pessoa == null)
+                return NotFound("Pessoa não encontrada.");
+
+            pessoa.Nome = pessoaAtualizada.Nome;
+            pessoa.Peso = pessoaAtualizada.Peso;
+            pessoa.Altura = pessoaAtualizada.Altura;
+
+            return Ok(pessoa);
+        }
+
+        // c. Remover uma pessoa
+        [HttpDelete("remover/{cpf}")]
+        public IActionResult Remover(string cpf)
+        {
+            var pessoa = pessoas.FirstOrDefault(p => p.Cpf == cpf);
+            if (pessoa == null)
+                return NotFound("Pessoa não encontrada.");
+
+            pessoas.Remove(pessoa);
+            return Ok("Pessoa removida com sucesso.");
+        }
+
+        // d. Buscar todas as pessoas
+        [HttpGet("todas")]
+        public IActionResult BuscarTodas()
+        {
+            return Ok(pessoas);
+        }
+
+        // e. Buscar uma pessoa específica pelo CPF
+        [HttpGet("buscar/{cpf}")]
+        public IActionResult BuscarPorCpf(string cpf)
+        {
+            var pessoa = pessoas.FirstOrDefault(p => p.Cpf == cpf);
+            if (pessoa == null)
+                return NotFound("Pessoa não encontrada.");
+
+            return Ok(pessoa);
+        }
+
+        // f. Buscar todas as pessoas com IMC bom (18 a 24)
+        [HttpGet("imc-bom")]
+        public IActionResult BuscarIMCBom()
+        {
+            var pessoasIMCBom = pessoas.Where(p => p.IMC >= 18 && p.IMC <= 24).ToList();
+            return Ok(pessoasIMCBom);
+        }
+
+        // g. Buscar pessoas por nome (contendo o termo informado)
+        [HttpGet("buscar-nome/{nome}")]
+        public IActionResult BuscarPorNome(string nome)
+        {
+            var resultado = pessoas.Where(p => p.Nome.ToLower().Contains(nome.ToLower())).ToList();
+            return Ok(resultado);
+        }
+    }
+}
+
